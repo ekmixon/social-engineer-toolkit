@@ -62,8 +62,7 @@ sendmail_file = open("/etc/setoolkit/set.config", "r").readlines()
 for line in sendmail_file:
     # strip carriage returns
     line = line.rstrip()
-    match = re.search("SENDMAIL=", line)
-    if match:
+    if match := re.search("SENDMAIL=", line):
         # if match and if line is flipped on continue on
         if line == ("SENDMAIL=ON"):
             print_info(
@@ -79,10 +78,11 @@ for line in sendmail_file:
                         "/etc/init.d/sendmail start", shell=True).wait()
 
                 # added for osx
-                if not os.path.isfile("/usr/sbin/sendmail"):
-                    if not os.path.isfile("/etc/init.d/sendmail"):
-                        pause = input("[!] Sendmail was not found. Try again and restart. (For Kali - apt-get install sendmail-bin)")
-                        sys.exit()
+                if not os.path.isfile(
+                    "/usr/sbin/sendmail"
+                ) and not os.path.isfile("/etc/init.d/sendmail"):
+                    pause = input("[!] Sendmail was not found. Try again and restart. (For Kali - apt-get install sendmail-bin)")
+                    sys.exit()
                 smtp = ("localhost")
                 port = ("25")
                 # Flip sendmail switch to get rid of some questions
@@ -92,10 +92,7 @@ for line in sendmail_file:
                 provideruser = ''
                 pwd = ''
 
-    # Search for SMTP provider we will be using
-    match1 = re.search("EMAIL_PROVIDER=", line)
-    if match1:
-
+    if match1 := re.search("EMAIL_PROVIDER=", line):
         # if we hit on EMAIL PROVIDER
         email_provider = line.replace("EMAIL_PROVIDER=", "").lower()
 
@@ -105,18 +102,16 @@ for line in sendmail_file:
                 smtp = ("smtp.gmail.com")
                 port = ("587")
 
-        # support smtp for yahoo
-        if email_provider == "yahoo":
-            if sendmail == 0:
-                smtp = ("smtp.mail.yahoo.com")
-                port = ("587")
-
-        # support smtp for hotmail
-        if email_provider == "hotmail":
+        elif email_provider == "hotmail":
             if sendmail == 0:
                 smtp = ("smtp.live.com")
                 port = ("587")
 
+
+        elif email_provider == "yahoo":
+            if sendmail == 0:
+                smtp = ("smtp.mail.yahoo.com")
+                port = ("587")
 
 print ("""
    Social Engineer Toolkit Mass E-Mailer
@@ -183,8 +178,7 @@ if option1 != "99":
     counter = 0
     # Specify mail Option Here
     if relay == '1':
-        provideruser = input(
-            setprompt(["1"], "Your %s email address" % (email_provider)))
+        provideruser = input(setprompt(["1"], f"Your {email_provider} email address"))
         from_address = provideruser
         from_displayname = input(
             setprompt(["1"], "The FROM NAME the user will see"))
@@ -213,7 +207,7 @@ if option1 != "99":
     # specify if its a high priority or not
     highpri = yesno_prompt(
         ["1"], "Flag this message/s as high priority? [yes|no]")
-    if not "YES" in highpri:
+    if "YES" not in highpri:
         prioflag1 = ""
         prioflag2 = ""
     else:
@@ -223,7 +217,7 @@ if option1 != "99":
     # if we want to attach a file
     file_format = ""
     yesno = raw_input("Do you want to attach a file - [y/n]: ")
-    if yesno.lower() == "y" or yesno.lower() == "yes":
+    if yesno.lower() in ["y", "yes"]:
         file_format = raw_input(
             "Enter the path to the file you want to attach: ")
         if not os.path.isfile(file_format):
@@ -232,21 +226,20 @@ if option1 != "99":
     inline_files = []
     while True:
         yesno = raw_input("Do you want to attach an inline file - [y/n]: ")
-        if yesno.lower() == "y" or yesno.lower() == "yes":
-            inline_file = raw_input(
-                "Enter the path to the inline file you want to attach: ")
-            if os.path.isfile(inline_file):
-                inline_files.append( inline_file )
-        else:
+        if yesno.lower() not in ["y", "yes"]:
             break
 
+        inline_file = raw_input(
+            "Enter the path to the inline file you want to attach: ")
+        if os.path.isfile(inline_file):
+            inline_files.append( inline_file )
     subject = input(setprompt(["1"], "Email subject"))
     try:
         html_flag = input(
             setprompt(["1"], "Send the message as html or plain? 'h' or 'p' [p]"))
 
         # if we are specifying plain or defaulting to plain
-        if html_flag == "" or html_flag == "p":
+        if html_flag in ["", "p"]:
             message_flag = "plain"
         # if we are specifying html
         if html_flag == "h":
@@ -275,8 +268,19 @@ if option1 != "99":
                 "each of the users clicks and who the user was. As an example, say my SET")
             print(
                 "website is hosted at http://www.trustedsec.com/index.php and I want to track users.")
-            print("I would type below " + bcolors.BOLD +
-                  "http://www.trustedsec.com/index.php?INSERTUSERHERE" + bcolors.ENDC + ". Note that in")
+            print(
+                (
+                    (
+                        (
+                            f"I would type below {bcolors.BOLD}"
+                            + "http://www.trustedsec.com/index.php?INSERTUSERHERE"
+                        )
+                        + bcolors.ENDC
+                    )
+                    + ". Note that in"
+                )
+            )
+
             print(
                 "order for SET to work, you will need to specify index.php?INSERTUSERHERE. That is the")
             print(
@@ -300,9 +304,8 @@ if option1 != "99":
                 if body_1 == "END":
                     break
                 else:
-                    body = body + body_1
+                    body += body_1
 
-            # except KeyboardInterrupts (control-c) and pass through.
             except KeyboardInterrupt:
                 break
 
@@ -311,7 +314,7 @@ if option1 != "99":
         if track_email.lower() == "on":
             # here we replace url with .php if they made a mistake
             body = body.replace(".html", ".php")
-            if not "?INSERTUSERHERE" in body:
+            if "?INSERTUSERHERE" not in body:
                 print_error(
                     "You have track email to on however did not specify ?INSERTUSERHERE.")
                 print_error(
@@ -319,7 +322,6 @@ if option1 != "99":
                 pause = input(
                     "Press {" + bcolors.BOLD + "return" + bcolors.ENDC + "} to continue.")
 
-    # except KeyboardInterrupts (control-c) and pass through.
     except KeyboardInterrupt:
         pass
 
@@ -334,7 +336,7 @@ def mail(to, subject, prioflag1, prioflag2, text):
     msg['X-MSMail-Priority'] = prioflag2
     msg['Subject'] = Header(subject, 'UTF-8').encode()
 
-    body_type = MIMEText(text, "%s" % (message_flag), 'UTF-8')
+    body_type = MIMEText(text, f"{message_flag}", 'UTF-8')
     msg.attach(body_type)
 
     # now attach the file
@@ -353,7 +355,7 @@ def mail(to, subject, prioflag1, prioflag2, text):
             email.encoders.encode_base64(fileMsg)
             fileMsg.add_header(
                 'Content-Disposition', 'inline; filename="%s"' % os.path.basename(inline_file) )
-            fileMsg.add_header( "Content-ID", "<%s>" % os.path.basename(inline_file) )
+            fileMsg.add_header("Content-ID", f"<{os.path.basename(inline_file)}>")
             msg.attach(fileMsg)
 
     mailServer = smtplib.SMTP(smtp, port)
@@ -362,24 +364,19 @@ def mail(to, subject, prioflag1, prioflag2, text):
     msggen = Generator(io, False)
     msggen.flatten(msg)
 
-    if sendmail == 0:
+    if sendmail == 0 and email_provider in ["gmail", "yahoo", "hotmail"]:
+        try:
+            mailServer.starttls()
+        except:
+            mailServer.ehlo()
 
-        if email_provider == "gmail" or email_provider == "yahoo" or email_provider == "hotmail":
-            try:
-                mailServer.starttls()
-            except:
-                pass
-                mailServer.ehlo()
-
-            else:
-                mailServer.ehlo()
+        else:
+            mailServer.ehlo()
 
     try:
         if provideruser != "" or pwd != "":
             mailServer.login(provideruser, pwd)
-            mailServer.sendmail(from_address, to, io.getvalue())
-        else:
-            mailServer.sendmail(from_address, to, io.getvalue())
+        mailServer.sendmail(from_address, to, io.getvalue())
     except:
         # try logging in with base64 encoding here
         import base64

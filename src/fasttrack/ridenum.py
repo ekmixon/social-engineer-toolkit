@@ -72,10 +72,7 @@ def check_user_lsa(ip):
     proc = subprocess.Popen('rpcclient -U "" {0} -N -c "lsaquery"'.format(ip), stdout=subprocess.PIPE, shell=True)
     stdout_value = proc.communicate()[0]
     # if the user wasn't found, return a False
-    if not "Domain Sid" in stdout_value:
-        return False
-    else:
-        return stdout_value
+    return False if "Domain Sid" not in stdout_value else stdout_value
 
 
 # attempt to lookup an account via rpcclient
@@ -88,10 +85,7 @@ def check_user(ip, account):
     stdout_value = proc.communicate()[0]
     # if the user wasn't found, return a False
     bad_statuses = ["NT_STATUS_NONE_MAPPED", "NT_STATUS_CONNECTION_REFUSED", "NT_STATUS_ACCESS_DENIED"]
-    if any(x in stdout_value for x in bad_statuses):
-        return False
-    else:
-        return stdout_value
+    return False if any(x in stdout_value for x in bad_statuses) else stdout_value
 
 
 # helper function to break a list up into smaller lists
@@ -105,14 +99,10 @@ def chunk(l, n):
 def sids_to_names(ip, sid, start, stop):
     rid_accounts = []
     ranges = ['{0}-{1}'.format(sid, rid) for rid in range(start, stop)]
-    # different chunk size for darwin (os x)
-    chunk_size = 2500
-    if sys.platform == 'darwin':
-        chunk_size = 5000
+    chunk_size = 5000 if sys.platform == 'darwin' else 2500
     chunks = list(chunk(ranges, chunk_size))
     for c in chunks:
-        command = 'rpcclient -U "" {0} -N -c "lookupsids '.format(ip)
-        command += ' '.join(c)
+        command = 'rpcclient -U "" {0} -N -c "lookupsids '.format(ip) + ' '.join(c)
         command += '"'
         proc = subprocess.Popen(command, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, shell=True)
@@ -124,18 +114,17 @@ def sids_to_names(ip, sid, start, stop):
 
             break
         for line in stdout_value.rstrip().split('\n'):
-            if "*unknown*" not in line:
-                if line != "":
-                    rid_account = line.split(" ", 1)[1]
-                    # will show during an unhandled request
-                    # '00000' are bogus accounts?
-                    # only return accounts ie. (1). Everything else should be a group
-                    if rid_account != "request" and '00000' not in rid_account and '(1)' in rid_account:
-                        # here we join based on spaces, for example 'Domain Admins' needs to be joined
-                        rid_account = rid_account.replace("(1)", "")
-                        # return the full domain\username
-                        rid_account = rid_account.rstrip()
-                        rid_accounts.append(rid_account)
+            if "*unknown*" not in line and line != "":
+                rid_account = line.split(" ", 1)[1]
+                # will show during an unhandled request
+                # '00000' are bogus accounts?
+                # only return accounts ie. (1). Everything else should be a group
+                if rid_account != "request" and '00000' not in rid_account and '(1)' in rid_account:
+                    # here we join based on spaces, for example 'Domain Admins' needs to be joined
+                    rid_account = rid_account.replace("(1)", "")
+                    # return the full domain\username
+                    rid_account = rid_account.rstrip()
+                    rid_accounts.append(rid_account)
     return rid_accounts
 
 
@@ -215,9 +204,7 @@ try:
         # remove old file
         os.remove("{0}_users.txt".format(ip))
     with open("{0}_users.txt".format(ip), "a") as filewrite:
-        # cycle through rid and enumerate the domain
-        sid_names = sids_to_names(ip, sid, rid_start, rid_stop)
-        if sid_names:
+        if sid_names := sids_to_names(ip, sid, rid_start, rid_stop):
             for name in sid_names:
                 # print the sid
                 print("Account name: {0}".format(name))
@@ -235,20 +222,19 @@ try:
             counter = 0
             for line in iter(proc.stdout.readline, ''):
                 counter = 1
-                if line != '':
-                    if "user:" in line:
-                        # cycle through
-                        line = line.split("rid:")
-                        line = line[0].replace("user:[", "").replace("]", "")
-                        print(line)
-                        filewrite.write(line + "\n")
-                    else:
-                        denied = 2
-                        break
-                else:
+                if line == '':
                     if counter == 0:
                         break
 
+                elif "user:" in line:
+                    # cycle through
+                    line = line.split("rid:")
+                    line = line[0].replace("user:[", "").replace("]", "")
+                    print(line)
+                    filewrite.write(line + "\n")
+                else:
+                    denied = 2
+                    break
         # if we had nothing to pull
         if counter == 0:
             denied = 2
@@ -256,8 +242,8 @@ try:
         if denied == 2:
             print("[!] Sorry. RID_ENUM failed to successfully enumerate users. Bummers.")
 
-        if denied == 1:
-            print("[*] Finished dumping users, saved to {0}_users.txt.".format(ip))
+    if denied == 1:
+        print("[*] Finished dumping users, saved to {0}_users.txt.".format(ip))
 
     # if we specified a password list
     if passwords:
@@ -357,7 +343,7 @@ try:
                             success = True
                             child.kill(0)
 
-                        if i == 8 or i == 9:
+                        if i in [8, 9]:
                             print("[!] Unable to connect to the server. Try again or check networking settings.")
                             print("[!] Exiting RIDENUM...")
                             success = False

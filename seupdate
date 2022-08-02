@@ -9,10 +9,9 @@ import sys
 
 
 # check where we are and load default directory
-if os.path.isdir("/usr/share/setoolkit"):
-    if not os.path.isfile("se-toolkit"):
-        os.chdir("/usr/share/setoolkit")
-        sys.path.append("/usr/share/setoolkit")
+if os.path.isdir("/usr/share/setoolkit") and not os.path.isfile("se-toolkit"):
+    os.chdir("/usr/share/setoolkit")
+    sys.path.append("/usr/share/setoolkit")
 
 import src.core.setcore as core
 

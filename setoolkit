@@ -19,16 +19,10 @@ import src.core.setcore as core
 # check which operating system
 operating_system = core.check_os()
 
-if operating_system == "posix":
-
-    #
-    # ROOT CHECK
-    #
-
-    if os.geteuid() != 0:
-        print("\n The Social-Engineer Toolkit (SET) - by David Kennedy (ReL1K)")
-        print("\n Not running as root. \n\nExiting the Social-Engineer Toolkit (SET).\n")
-        core.exit_set()
+if operating_system == "posix" and os.geteuid() != 0:
+    print("\n The Social-Engineer Toolkit (SET) - by David Kennedy (ReL1K)")
+    print("\n Not running as root. \n\nExiting the Social-Engineer Toolkit (SET).\n")
+    core.exit_set()
 
 # if we are running in the path no need to change
 if os.path.isfile("setoolkit"):
@@ -82,14 +76,13 @@ if not os.path.isfile("src/logs/set_logfile.log"):
         filewrite.write("")
 
 # use ~/.set
-if operating_system == "posix":
-    if not os.path.isdir(core.userconfigpath):
-        # create the set variables
-        os.makedirs(core.userconfigpath)
-        # if for some reason it failed to pull the path
-        userdir = os.path.join(os.path.expanduser('~'), '.set')
-        if not os.path.isdir(userdir):
-            os.makedirs(userdir)
+if operating_system == "posix" and not os.path.isdir(core.userconfigpath):
+    # create the set variables
+    os.makedirs(core.userconfigpath)
+    # if for some reason it failed to pull the path
+    userdir = os.path.join(os.path.expanduser('~'), '.set')
+    if not os.path.isdir(userdir):
+        os.makedirs(userdir)
 
 if not os.path.isdir(os.path.join(core.userconfigpath, "reports")):
     os.makedirs(os.path.join(core.userconfigpath, "reports"))
@@ -99,8 +92,6 @@ try:
     from Crypto.Cipher import AES
 except ImportError:
     print("[!] The python-pycrypto python module not installed. You will lose the ability to use multi-pyinjector.")
-    pass
-
 #
 # The Social-Engineer Toolkit (SET)     #
 # Written by: David Kennedy (ReL1K)     #
@@ -188,7 +179,10 @@ try:
                 filewrite.write("user accepted")
             print(core.bcolors.ENDC)
         else:
-            print(core.bcolors.ENDC + "[!] Exiting the Social-Engineer Toolkit, have a nice day." + core.bcolors.ENDC)
+            print(
+                f"{core.bcolors.ENDC}[!] Exiting the Social-Engineer Toolkit, have a nice day.{core.bcolors.ENDC}"
+            )
+
             sys.exit()
 
     while True:
@@ -223,11 +217,14 @@ try:
 
         # cavs
         if main_menu_choice == "cavs":
-            core.print_warning(core.bcolors.BOLD + "2015-2016 CHAMPS BABY!!! C l e e e e e  e v  eeee l a a n n d d d d d d d d d d d " + core.bcolors.ENDC)
+            core.print_warning(
+                f"{core.bcolors.BOLD}2015-2016 CHAMPS BABY!!! C l e e e e e  e v  eeee l a a n n d d d d d d d d d d d {core.bcolors.ENDC}"
+            )
+
             pause = input("Press {return} to continue.")
 
         # quit out
-        if main_menu_choice == 'exit' or main_menu_choice == "99" or main_menu_choice == "quit":
+        if main_menu_choice in ['exit', "99", "quit"]:
             core.exit_set()
             # cleans up stale processes from SET
             try:
@@ -271,13 +268,11 @@ try:
         if main_menu_choice == '6':
             core.help_menu()
 
-# handle keyboard interrupts
 except KeyboardInterrupt:
     print(("\n\nThank you for {0}shopping{1} with the Social-Engineer Toolkit."
            "\n\nHack the Gibson...and remember...hugs are worth more "
            "than handshakes.\n".format(core.bcolors.RED, core.bcolors.ENDC)))
 
-# handle exceptions
 except Exception as error:
     core.log(error)
     print("\n\n[!] Something went wrong, printing the error: " + str(error))
